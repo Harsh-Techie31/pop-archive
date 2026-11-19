@@ -36,12 +36,13 @@ export default function HomeView() {
 
   return (
     <main className={`view view--home${chosen ? ' is-leaving' : ''}`}>
-      {/* the Figma frame fits two folders under the masthead; every folder past
-          that lifts masthead + stack 40 design px so the front card's text stays on screen */}
-      <div className="masthead" style={{ marginTop: `calc(${-40 * Math.max(0, n - 2)}px * var(--s))` }}>
-        <h1 className="masthead__word">Archive</h1>
-        <div className="masthead__veil" aria-hidden="true" />
-        <img className="masthead__logo" src="/assets/folder/pop-logo.svg" alt="POP" />
+      {/* trimmed and scaled by --mshift / --mk (lib/fit.ts) so the stack fits the window height */}
+      <div className="masthead">
+        <div className="masthead__inner">
+          <h1 className="masthead__word">Archive</h1>
+          <div className="masthead__veil" aria-hidden="true" />
+          <img className="masthead__logo" src="/assets/folder/pop-logo.svg" alt="POP" />
+        </div>
       </div>
 
       <div className={`stack${chosen ? ' is-choosing' : ''}`}>
@@ -53,7 +54,14 @@ export default function HomeView() {
             data-theme={b.theme}
             data-slug={b.slug}
             aria-label={`${b.title} — ${b.readTime}`}
-            style={{ top: `calc(${(n - 1 - i) * 118.33}px * var(--s))`, '--z': n - i } as CSSProperties}
+            style={
+              {
+                top: `calc(${(n - 1 - i) * 118.33}px * var(--s))`,
+                '--z': n - i,
+                // how far this folder rises while the front one is hovered (lib/fit.ts)
+                '--behind-lift': i ? `var(--behind-lift-${i}, 0)` : 0,
+              } as CSSProperties
+            }
             onClick={() => choose(b.slug)}
           >
             <CardArt slug={b.slug} />

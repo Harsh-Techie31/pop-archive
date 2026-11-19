@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from 'next';
 import { awesomeSerif, figtree } from './fonts';
 import SvgDefs from '@/components/SvgDefs';
-import Scale, { SCALE_SCRIPT } from '@/components/Scale';
+import Scale from '@/components/Scale';
+import { fitScript } from '@/lib/fit';
+import { BLOGS } from '@/lib/content';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -15,14 +17,14 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    // --s is written onto <html> before hydration, so React must not flag it
+    // --s / --mshift / --mk are written onto <html> before hydration, so React must not flag them
     <html lang="en" className={`${figtree.variable} ${awesomeSerif.variable}`} suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: SCALE_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: fitScript(BLOGS.length) }} />
       </head>
       <body>
         <SvgDefs />
-        <Scale />
+        <Scale folders={BLOGS.length} />
         {children}
       </body>
     </html>

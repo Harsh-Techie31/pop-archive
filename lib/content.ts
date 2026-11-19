@@ -116,7 +116,7 @@ const PLACEHOLDER_PROBLEM: Block[] = [
   },
 ];
 
-/* ── AI Image Catalogue Cleaning — condensed from the Substack write-up:
+/* ── AI Image Pipeline — condensed from the Substack write-up:
       harsh3101.substack.com/p/end-to-end-e-commerce-catalogue-image */
 const CATALOGUE: Block[] = [
   { type: 'h2', text: '1 lakh images, one look' },
@@ -201,7 +201,7 @@ const CATALOGUE: Block[] = [
 export const BLOGS: Blog[] = [
   {
     slug: 'ai-image-catalogue-cleaning',
-    title: 'AI Image Catalogue Cleaning',
+    title: 'AI Image Pipeline',
     dek: 'An AI automation that cleaned 1 lakh+ catalogue images, with AI checking AI’s work',
     readTime: '3m read',
     theme: 'green',

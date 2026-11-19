@@ -8,7 +8,11 @@
   --ease:cubic-bezier(.22,1,.36,1);
   --ease-soft:cubic-bezier(.4,0,.2,1);
   --shell:1512px;            /* design width — the whole page scales from this */
-  --s:1;                     /* viewport / 1512, set by components/Scale.tsx so design px scale exactly */
+  --s:1;                     /* viewport / 1512, set by lib/fit.ts so design px scale exactly */
+  --mshift:0;                /* design px trimmed above the logo on short windows (lib/fit.ts) */
+  --mk:1;                    /* masthead scale on short windows (lib/fit.ts) */
+  --mh:497.38;               /* masthead height in design px (lib/fit.ts) */
+  --front-lift:57.71;        /* how far the front folder rises on hover (lib/fit.ts) */
 }
 
 *{box-sizing:border-box;}
@@ -41,8 +45,15 @@ a{color:inherit;text-decoration:none;}
 .masthead{
   position:relative;
   flex:0 0 auto;
-  height:calc(497.38px * var(--s));
+  height:calc(var(--mh) * 1px * var(--s));
   transition:opacity .45s var(--ease-soft),transform .55s var(--ease);
+}
+/* the Figma masthead at full size; trimmed from the top, then scaled about the top centre */
+.masthead__inner{
+  position:absolute;left:0;top:0;width:100%;
+  height:calc(497.38px * var(--s));
+  transform-origin:50% 0;
+  transform:scale(var(--mk)) translateY(calc(var(--mshift) * -1px * var(--s)));
 }
 
 .masthead__word{
@@ -108,6 +119,10 @@ a{color:inherit;text-decoration:none;}
      Figma UI hovered  Figma UI 440.00, Motion 692.00   (−57.71 / +76.29) */
 .folder:is(:hover,:focus-visible)               {--lift:calc(-57.71px * var(--s));}
 .folder:has(~ .folder:is(:hover,:focus-visible)){--lift:calc(76.29px  * var(--s));}
+/* the front folder rises as far as the window needs to show its summary and stickers */
+.folder:first-child:is(:hover,:focus-visible){--lift:calc(var(--front-lift) * -1px * var(--s));}
+/* …and the folders behind it rise with it, so each keeps its title showing */
+.folder:first-child:is(:hover,:focus-visible) ~ .folder{--lift:calc(var(--behind-lift) * -1px * var(--s));}
 .folder:focus-visible{outline:none;}
 .folder:focus-visible .folder__title{text-decoration:underline;text-underline-offset:6px;}
 
