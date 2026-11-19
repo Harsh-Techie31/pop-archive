@@ -1,0 +1,382 @@
+/* fonts are loaded with next/font in app/fonts.ts */
+
+/* ─────────────────────────────────────────────── tokens */
+:root{
+  --ink:#171717;
+  --paper:#F1EFEA;
+  --paper-ink:#0D0D0D;
+  --ease:cubic-bezier(.22,1,.36,1);
+  --ease-soft:cubic-bezier(.4,0,.2,1);
+  --shell:1512px;            /* design width — the whole page scales from this */
+  --s:1;                     /* viewport / 1512, set by components/Scale.tsx so design px scale exactly */
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--ink);
+  color:#fff;
+  font-family:var(--font-figtree),system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;}
+a{color:inherit;text-decoration:none;}
+.svg-defs{position:absolute;width:0;height:0;overflow:hidden;}
+
+.view{position:relative;width:100%;}
+
+/* ─────────────────────────────────────────────── home */
+.view--home{
+  height:100svh;
+  min-height:620px;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+.view--home.is-leaving .masthead{opacity:0;transform:translateY(-28px) scale(.98);}
+/* Geometry is the Figma frame, 1 design px = 1px at 1512 wide.
+   Archive sits underneath; a #171717 ellipse with a 109.03 layer blur sits over it;
+   the pop logo floats on top, overlapping Archive by 23px. */
+.masthead{
+  position:relative;
+  flex:0 0 auto;
+  height:calc(497.38px * var(--s));
+  transition:opacity .45s var(--ease-soft),transform .55s var(--ease);
+}
+
+.masthead__word{
+  position:absolute;margin:0;
+  /* 60px of padding all round so the gradient fill covers every glyph pixel;
+     the box is offset by the same 60 so the text still lands at 395.48 / 211.84 */
+  left:calc(335.484px * var(--s));
+  top:calc(151.841px * var(--s));
+  width:calc(836px * var(--s));
+  padding:calc(60px * var(--s));
+  font-family:var(--font-serif),Georgia,serif;font-style:italic;font-weight:700;
+  font-size:calc(256.061px * var(--s));
+  line-height:calc(206.215px * var(--s));
+  letter-spacing:-.03em;
+  white-space:nowrap;
+  /* stops are the design's 0% / 79.775% / 147.88%, remapped onto the padded box */
+  background:linear-gradient(180deg,#fff 18.39%,#999 68.82%,#010101 111.87%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  user-select:none;
+}
+
+.masthead__veil{
+  position:absolute;
+  left:calc(566.624px * var(--s));
+  top:calc(91.037px * var(--s));
+  width:calc(373.721px * var(--s));
+  height:calc(160.217px * var(--s));
+  border-radius:50%;
+  background:#171717;
+  filter:blur(calc(54.515px * var(--s)));   /* Figma layer blur 109.03 */
+  pointer-events:none;
+}
+
+.masthead__logo{
+  position:absolute;
+  /* the export carries its own glow bleed, so the box is 247.874 wide, not 203.28 */
+  left:calc(635.30px * var(--s));
+  top:calc(110.53px * var(--s));
+  width:calc(247.874px * var(--s));
+}
+
+/* ─────────────────────────────────────────────── folder stack */
+.stack{position:relative;flex:1 1 auto;}
+
+.folder{
+  --lift:0px;
+  --z:1;
+  z-index:var(--z);
+  position:absolute;left:0;
+  width:100%;
+  aspect-ratio:1512/879.5;
+  transform:translateY(var(--lift));
+  transition:transform .5s var(--ease);
+  cursor:pointer;
+  text-align:left;
+  display:block;
+}
+/* Hover, straight from the three Figma frames. Picking a card always lifts
+   that card, and any card in front of it drops out of the way so its summary
+   is uncovered — the same motion whichever card you pick.
+     default           Figma UI 497.38, Motion 615.71
+     Motion hovered    Figma UI 497.38, Motion 558.00   (−57.71)
+     Figma UI hovered  Figma UI 440.00, Motion 692.00   (−57.71 / +76.29) */
+.folder:is(:hover,:focus-visible)               {--lift:calc(-57.71px * var(--s));}
+.folder:has(~ .folder:is(:hover,:focus-visible)){--lift:calc(76.29px  * var(--s));}
+.folder:focus-visible{outline:none;}
+.folder:focus-visible .folder__title{text-decoration:underline;text-underline-offset:6px;}
+
+/* the Figma illustration: a 1538 × 900 canvas with the folder at 0.5 / 19.5
+   and its drop shadow baked in, so it hangs slightly outside the card box */
+.folder__art{
+  position:absolute;
+  left:-0.033%;
+  top:-2.217%;
+  width:101.72%;
+  height:102.33%;
+  max-width:none;
+  pointer-events:none;
+  display:block;
+}
+
+/* the Figma "Default" frame measures this block on the Motion card at
+   84.05 / 36.97, 296 wide, with 50 between the title and the summary —
+   both cards use it */
+.folder__text{
+  position:absolute;
+  left:5.559%;              /* 84.05 / 1512  */
+  top:4.204%;               /* 36.97 / 879.5 */
+  width:19.577%;            /* 296   / 1512  */
+  color:#fff;
+}
+/* heights are the Figma text boxes (33 and 76), so the 50 and 18 gaps below
+   them put the summary at 119.97 and the read time at 213.97 on the card */
+.folder__title{
+  margin:0;font-weight:500;
+  font-size:calc(39.751px * var(--s));
+  line-height:calc(32.013px * var(--s));
+  height:calc(33px * var(--s));
+  letter-spacing:-.03em;
+  white-space:nowrap;       /* longer titles run past the 296 text column, never onto the summary */
+}
+.folder__dek{
+  margin:calc(50px * var(--s)) 0 0;
+  height:calc(76px * var(--s));
+  font-weight:500;
+  font-size:calc(18px * var(--s));
+  line-height:calc(25.209px * var(--s));
+  letter-spacing:.02em;
+}
+.folder__read{
+  margin:calc(18px * var(--s)) 0 0;
+  font-weight:400;
+  font-size:calc(14px * var(--s));
+  line-height:calc(25.209px * var(--s));
+  letter-spacing:.02em;
+}
+
+.folder__stickers{position:absolute;inset:0;pointer-events:none;}
+.folder__stickers img{position:absolute;height:auto;max-width:none;}
+
+/* the opened folder in the reader is still drawn from the vector, so its
+   gradients are sampled from the card illustrations to match them */
+[data-theme='blue']  {--grad:url(#g-blue);  --edge:url(#g-blue-edge);}
+[data-theme='orange']{--grad:url(#g-orange);--edge:url(#g-orange-edge);}
+[data-theme='green'] {--grad:url(#g-green); --edge:url(#g-green-edge);}
+
+/* selection feedback: the chosen folder keeps rising, the rest sink away */
+.stack.is-choosing .folder{transition:transform .62s var(--ease),opacity .4s var(--ease-soft);}
+.stack.is-choosing .folder:not(.is-chosen){--lift:170px;opacity:0;}
+.stack.is-choosing .folder.is-chosen{--lift:-150px;}
+
+/* ─────────────────────────────────────────────── reader */
+.view--reader{min-height:100svh;}
+
+.reader__bar{
+  position:relative;z-index:3;background:var(--ink);
+  padding:47px 0 0;
+}
+.back{
+  display:flex;align-items:center;gap:10px;
+  margin:0 0 38px clamp(24px,6.6vw,99px);
+  font-size:20px;letter-spacing:-.03em;
+  transition:opacity .2s var(--ease-soft);
+}
+.back:hover{opacity:.6;}
+.back img{width:32px;height:32px;display:block;}
+
+.reader__head{
+  display:flex;align-items:flex-start;gap:clamp(28px,7.5vw,114px);
+  padding:0 clamp(24px,6.6vw,99px) 44px;
+}
+.reader__title{
+  margin:0;flex:0 0 auto;
+  font-family:var(--font-serif),Georgia,serif;font-style:italic;font-weight:700;
+  font-size:clamp(34px,3.4vw,48px);line-height:1.1;letter-spacing:-.01em;
+  white-space:nowrap;
+}
+.reader__meta{display:flex;align-items:flex-start;gap:clamp(20px,3vw,44px);padding-top:6px;}
+.reader__dek{
+  margin:0;max-width:396px;
+  font-weight:500;font-size:18px;line-height:1.6;letter-spacing:.02em;
+}
+.reader__rule{align-self:stretch;width:1px;background:rgba(255,255,255,.35);}
+.reader__read{margin:0;font-size:16px;line-height:1.6;opacity:.95;white-space:nowrap;}
+
+/* enter motion — title lifts, summary wipes in left → right */
+.view--reader.is-entering .reader__title{
+  animation:title-in .62s var(--ease) both;
+}
+.view--reader.is-entering .reader__dek {animation:wipe-in .58s var(--ease) .16s both;}
+.view--reader.is-entering .reader__rule{animation:wipe-in .4s  var(--ease) .3s  both;}
+.view--reader.is-entering .reader__read{animation:wipe-in .5s  var(--ease) .34s both;}
+.view--reader.is-entering .sheet       {animation:sheet-in .72s var(--ease) both;}
+.view--reader.is-entering .back        {animation:fade-in .5s var(--ease-soft) .25s both;}
+
+@keyframes title-in{
+  from{opacity:0;transform:translateY(42px);clip-path:inset(0 0 100% 0);}
+  to  {opacity:1;transform:none;clip-path:inset(0 0 -20% 0);}
+}
+@keyframes wipe-in{
+  from{opacity:0;clip-path:inset(0 100% 0 0);}
+  to  {opacity:1;clip-path:inset(0 -4% 0 0);}
+}
+@keyframes sheet-in{
+  from{transform:translateY(96px);opacity:0;}
+  to  {transform:none;opacity:1;}
+}
+@keyframes fade-in{from{opacity:0;}to{opacity:1;}}
+
+/* the opened folder */
+.sheet{position:relative;}
+.sheet__folder{
+  position:relative;
+  width:92.4%;
+  padding:0 0 60px;
+  filter:drop-shadow(18px 10px 24px rgba(0,0,0,.45));
+}
+.folder-open{
+  position:absolute;inset:0;width:100%;height:100%;display:block;
+}
+.folder-open__fill  {fill:var(--grad);}
+.folder-open__grain {fill:var(--grad);}
+.folder-open__edge  {fill:none;stroke:var(--edge);stroke-width:2;}
+.folder-open__stitch{fill:none;stroke:rgba(255,255,255,.45);stroke-width:1.6;stroke-dasharray:10 10;}
+
+.sheet__tab{
+  position:absolute;right:-6px;top:66px;margin:0;
+  writing-mode:vertical-rl;
+  font-weight:500;font-size:20px;letter-spacing:.01em;
+  color:rgba(255,255,255,.95);
+  pointer-events:none;
+}
+
+/* draggable stickers */
+.stickers{position:absolute;left:0;top:0;width:30%;height:100%;}
+.sticker{
+  position:absolute;display:block;
+  filter:drop-shadow(0 10px 16px rgba(0,0,0,.34));
+  cursor:grab;touch-action:none;user-select:none;-webkit-user-drag:none;
+  transition:filter .2s var(--ease-soft),scale .2s var(--ease);
+}
+.sticker:hover{scale:1.035;}
+.sticker.is-held{
+  cursor:grabbing;scale:1.07;z-index:20;
+  filter:drop-shadow(0 22px 26px rgba(0,0,0,.45));
+  transition:none;
+}
+
+/* the paper the blog is written on */
+.paper{
+  position:relative;
+  margin:0 0 0 33%;
+  width:60%;
+  min-height:600px;
+  background:var(--paper);
+  color:var(--paper-ink);
+  box-shadow:0 2px 0 rgba(0,0,0,.12),0 26px 40px rgba(0,0,0,.28);
+  padding:48px 64px 72px 110px;
+}
+.paper::before{   /* paper grain */
+  content:'';position:absolute;inset:0;pointer-events:none;mix-blend-mode:multiply;opacity:.5;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.22'/%3E%3C/svg%3E");
+}
+.paper__clip{
+  position:absolute;right:38px;top:-46px;width:85px;
+  filter:drop-shadow(3px 3px 4px rgba(0,0,0,.4));
+  pointer-events:none;
+}
+.paper__holes{
+  position:absolute;left:0;top:0;bottom:0;width:72px;
+  border-right:1px solid rgba(119,119,119,.3);
+  display:flex;flex-direction:column;justify-content:space-around;align-items:center;
+  padding:48px 0;
+}
+.paper__holes i{width:20px;height:20px;border-radius:50%;background:var(--hole,#1640DD);display:block;}
+.sheet[data-theme='orange'] .paper__holes i{--hole:#C2431D;}
+.sheet[data-theme='green'] .paper__holes i{--hole:#04913F;}
+
+/* blog typography — Figtree, inked onto the page */
+.paper__body{position:relative;max-width:678px;}
+.paper__body > * + *{margin-top:24px;}
+.paper__body h2{
+  margin:0;font-weight:700;font-size:36px;line-height:40px;letter-spacing:-.02em;
+  padding-top:16px;
+}
+.paper__body h2 + *{margin-top:32px;}
+.paper__body h3{margin:0;font-weight:600;font-size:24px;line-height:30px;letter-spacing:-.02em;padding-top:8px;}
+.paper__body p{
+  margin:0;font-weight:400;font-size:16px;line-height:24px;
+  color:#14110F;
+  text-shadow:0 .4px .6px rgba(20,17,15,.28);   /* a touch of pen bleed */
+}
+.paper__body ol,.paper__body ul{margin:0;padding-left:26px;font-size:16px;line-height:24px;}
+.paper__body li + li{margin-top:4px;}
+.paper__body blockquote{
+  margin:0;padding:4px 0 4px 20px;border-left:3px solid rgba(20,17,15,.3);
+  font-weight:600;font-size:19px;line-height:28px;
+}
+.paper__body figure{margin:36px 0;}
+.paper__body figure img,.paper__body figure video{
+  display:block;width:100%;height:auto;border-radius:4px;
+  box-shadow:0 10px 24px rgba(0,0,0,.22);
+}
+.paper__body figcaption{
+  margin-top:10px;font-size:13px;letter-spacing:.02em;color:rgba(20,17,15,.65);
+}
+
+/* ─────────────────────────────────────────────── the TV (components/Tv.tsx) */
+.paper__body .tv-figure{margin:44px 0;}
+.paper__body .tv{display:block;width:100%;max-width:620px;height:auto;margin:0 auto;overflow:visible;}
+
+/* ─────────────────────────────────────────────── end / next blog */
+.next{position:relative;padding:0 0 120px;background:var(--ink);}
+.next__rule{display:block;width:100%;height:1px;margin:96px 0 0;border-top:1px solid rgba(255,255,255,.18);}
+.next__inner{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:40px;
+  padding:98px clamp(24px,4.6vw,70px) 0 clamp(24px,4.9vw,74px);
+}
+.next__link{display:flex;align-items:flex-start;gap:19px;text-align:left;max-width:420px;}
+.next__arrow{width:44px;height:44px;display:block;transition:transform .35s var(--ease);}
+.next__text{display:flex;flex-direction:column;}
+.next__title{
+  font-weight:500;font-size:clamp(28px,2.63vw,39.75px);line-height:1.1;letter-spacing:-.03em;
+  transition:color .25s var(--ease-soft),opacity .25s var(--ease-soft);
+}
+.next__dek{margin-top:46px;font-weight:500;font-size:18px;line-height:1.4;letter-spacing:.02em;max-width:296px;}
+.next__read{margin-top:18px;font-size:14px;letter-spacing:.02em;opacity:.9;}
+
+/* clickable feedback the brief asks for: #FFFFFF at 40% */
+.next__link:hover .next__title,
+.next__link:focus-visible .next__title{color:rgba(255,255,255,.4);}
+.next__link:hover .next__arrow{transform:translate(4px,-4px);}
+
+.next__folder{
+  position:relative;display:block;flex:0 0 auto;
+  width:min(711px,47vw);aspect-ratio:711/414;
+  transition:transform .4s var(--ease);
+}
+.next__folder:hover,.next__folder:focus-visible{transform:translateY(-14px);outline:none;}
+
+/* ─────────────────────────────────────────────── responsive */
+@media (max-width:900px){
+  .reader__head{flex-direction:column;gap:20px;}
+  .reader__meta{flex-direction:column;gap:12px;}
+  .reader__rule{display:none;}
+  .sheet__folder{width:100%;}
+  .stickers{display:none;}
+  .paper{margin:0 auto;width:92%;padding:40px 28px 56px 76px;}
+  .paper__holes{width:52px;}
+  .next__inner{flex-direction:column;}
+  .next__folder{width:100%;}
+  .folder__text{width:60%;min-width:0;}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms !important;transition-duration:.01ms !important;}
+}
