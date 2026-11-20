@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from 'next';
 import { awesomeSerif, figtree } from './fonts';
-import SvgDefs from '@/components/SvgDefs';
 import Scale from '@/components/Scale';
 import { fitScript } from '@/lib/fit';
 import { BLOGS } from '@/lib/content';
@@ -23,7 +22,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: fitScript(BLOGS.length) }} />
       </head>
       <body>
-        <SvgDefs />
         <Scale folders={BLOGS.length} />
         {children}
       </body>

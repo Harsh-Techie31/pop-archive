@@ -30,14 +30,15 @@ export function fitPage(folders: number) {
   var INK_BOTTOM = 418.06; // bottom of the "Archive" line box in the masthead
   var HOVER_GAP = 72; // a hovered back folder lifts 57.71, plus a little air
   var GAP = 118.33; // between folders
-  // how much of the front folder shows on hover: the top 70% of the 385 that
-  // fits its title, summary and stickers — the text, and the top of the stickers
-  var FRONT_CONTENT = 270;
+  // how much of the front folder shows on hover: the top 70% of the ~480 that
+  // fits its title, summary and stickers on the panel art — the text, and the
+  // top of the stickers (the card is 1007.5 design px tall at 1512 wide)
+  var FRONT_CONTENT = 336;
   var LIFT = 57.71; // Figma hover lift
   var GROW = 0.2; // the stack may show at most 20% more than the earlier layout
   var STRIP = 70; // a folder behind the hovered front one keeps its whole title showing…
   var STRIP_MIN = 50; // …or at least most of it, on very short windows
-  var FRONT_MIN = 242; // the hovered front folder always shows its summary + read time (ends at 239)
+  var FRONT_MIN = 244; // the hovered front folder always shows its read time and summary (ends at 239)
 
   // the earlier layout
   var shift = Math.min(TRIMMABLE, 40 * Math.max(0, folders - 2));

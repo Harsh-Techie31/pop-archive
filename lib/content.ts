@@ -7,8 +7,11 @@
      title      folder tab + reader header
      dek        one-line summary shown next to the header
      readTime   "5m read"
+     heading    the article heading printed on the paper (falls back to title)
+     date       the line under it, e.g. "October 20, 2026"
+     medium     link for "Also find this on Medium" — leave it out to hide the row
      theme      "blue" | "orange" | "green"  (folder colour, inside + out)
-     stickers   draggable stickers on the left of the open folder
+     stickers   draggable stickers, design px from the open folder's top-left
      blocks     the article itself, in order
 
    Block types:
@@ -46,6 +49,11 @@ export type Blog = {
   title: string;
   dek: string;
   readTime: string;
+  /** the heading printed on the paper; falls back to the title */
+  heading?: string;
+  date?: string;
+  /** "Also find this on Medium" — leave out to hide the row */
+  medium?: string;
   theme: 'blue' | 'orange' | 'green';
   /** design px inside the opened folder */
   stickers: StickerSpot[];
@@ -204,12 +212,14 @@ export const BLOGS: Blog[] = [
     title: 'AI Image Pipeline',
     dek: 'An AI automation that cleaned 1 lakh+ catalogue images, with AI checking AI’s work',
     readTime: '3m read',
+    heading: 'Catalogue Image Editing, End to End',
+    date: 'September 8, 2026',
     theme: 'green',
-    /* Claude stays where it was; Gemini and n8n replace the compass and Figma */
+    /* in the strip left of the paper (0 → 207 design px); drag them anywhere */
     stickers: [
-      { src: '/assets/stickers/gemini.png', x: 150, y: 40,  w: 168 },
-      { src: '/assets/stickers/bloom.png',  x: 210, y: 214, w: 180 },
-      { src: '/assets/stickers/n8n.png',    x: 24,  y: 400, w: 190 },
+      { src: '/assets/stickers/gemini.png', x: 22, y: 56,  w: 166 },
+      { src: '/assets/stickers/bloom.png',  x: 14, y: 270, w: 180 },
+      { src: '/assets/stickers/n8n.png',    x: 6,  y: 492, w: 192 },
     ],
     blocks: CATALOGUE,
   },
@@ -218,12 +228,16 @@ export const BLOGS: Blog[] = [
     title: 'Motion to Code',
     dek: 'Our dig into how we cracked a workflow to turn motion into production - ready code',
     readTime: '5m read',
+    heading: 'Motion Design to Code',
+    date: 'October 20, 2026',
+    medium: 'https://medium.com/',
     theme: 'blue',
-    /* design px inside the opened folder, from the Figma "folder selected" frame */
+    /* design px from the folder's top-left, in the strip left of the paper
+       (0 → 207) since the page was widened; drag them anywhere */
     stickers: [
-      { src: '/assets/stickers/bloom.png',  x: 156, y: 40,  w: 193.35 },
-      { src: '/assets/stickers/motion.png', x: 217, y: 206, w: 161.02 },
-      { src: '/assets/stickers/figma.png',  x: 59,  y: 363, w: 125.44 },
+      { src: '/assets/stickers/bloom.png',  x: 6,  y: 52,  w: 193.35 },
+      { src: '/assets/stickers/motion.png', x: 24, y: 282, w: 161.02 },
+      { src: '/assets/stickers/figma.png',  x: 42, y: 492, w: 125.44 },
     ],
     blocks: [...PLACEHOLDER_INTRO, { type: 'tv' }, ...PLACEHOLDER_PROBLEM],
   },
@@ -232,11 +246,14 @@ export const BLOGS: Blog[] = [
     title: 'Figma UI to Code',
     dek: 'Designers shouldn’t have to choose between beautiful and buildable anymore',
     readTime: '10m read',
+    heading: 'Figma UI to Code',
+    date: 'October 20, 2026',
+    medium: 'https://medium.com/',
     theme: 'orange',
     stickers: [
-      { src: '/assets/stickers/figma.png',  x: 150, y: 44,  w: 150 },
-      { src: '/assets/stickers/arc.png',    x: 212, y: 210, w: 159.14 },
-      { src: '/assets/stickers/bloom.png',  x: 54,  y: 360, w: 190 },
+      { src: '/assets/stickers/figma.png', x: 28, y: 56,  w: 149.49 },
+      { src: '/assets/stickers/arc.png',   x: 24, y: 290, w: 159.14 },
+      { src: '/assets/stickers/bloom.png', x: 40, y: 500, w: 125.44 },
     ],
     blocks: [...PLACEHOLDER_INTRO, ...PLACEHOLDER_PROBLEM],
   },

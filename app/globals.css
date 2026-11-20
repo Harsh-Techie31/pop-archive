@@ -26,7 +26,6 @@ body{
 }
 button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;}
 a{color:inherit;text-decoration:none;}
-.svg-defs{position:absolute;width:0;height:0;overflow:hidden;}
 
 .view{position:relative;width:100%;}
 
@@ -38,7 +37,12 @@ a{color:inherit;text-decoration:none;}
   display:flex;
   flex-direction:column;
 }
-.view--home.is-leaving .masthead{opacity:0;transform:translateY(-28px) scale(.98);}
+.view--home .masthead{transition:opacity .2s linear;}
+/* On a pick the home page is copied as it stands and floated over the reader
+   (components/HomeView.tsx) while the folders that weren't picked leave; the
+   masthead fades where it stands — it never moves. */
+.view--ghost{position:fixed;inset:0;z-index:50;pointer-events:none;}
+.view--home.is-leaving .masthead{opacity:0;}
 /* Geometry is the Figma frame, 1 design px = 1px at 1512 wide.
    Archive sits underneath; a #171717 ellipse with a 109.03 layer blur sits over it;
    the pop logo floats on top, overlapping Archive by 23px. */
@@ -46,7 +50,6 @@ a{color:inherit;text-decoration:none;}
   position:relative;
   flex:0 0 auto;
   height:calc(var(--mh) * 1px * var(--s));
-  transition:opacity .45s var(--ease-soft),transform .55s var(--ease);
 }
 /* the Figma masthead at full size; trimmed from the top, then scaled about the top centre */
 .masthead__inner{
@@ -98,13 +101,14 @@ a{color:inherit;text-decoration:none;}
 /* ─────────────────────────────────────────────── folder stack */
 .stack{position:relative;flex:1 1 auto;}
 
+/* the card is the 1443.43 × 961.78 panel export (lib/art.ts) */
 .folder{
   --lift:0px;
   --z:1;
   z-index:var(--z);
   position:absolute;left:0;
   width:100%;
-  aspect-ratio:1512/879.5;
+  aspect-ratio:1443.43/961.78;
   transform:translateY(var(--lift));
   transition:transform .5s var(--ease);
   cursor:pointer;
@@ -126,162 +130,256 @@ a{color:inherit;text-decoration:none;}
 .folder:focus-visible{outline:none;}
 .folder:focus-visible .folder__title{text-decoration:underline;text-underline-offset:6px;}
 
-/* the Figma illustration: a 1538 × 900 canvas with the folder at 0.5 / 19.5
-   and its drop shadow baked in, so it hangs slightly outside the card box */
-.folder__art{
-  position:absolute;
-  left:-0.033%;
-  top:-2.217%;
-  width:101.72%;
-  height:102.33%;
-  max-width:none;
-  pointer-events:none;
-  display:block;
-}
+/* Two pictures per card: the closed folder, and the "On hover" export with the
+   cover dropped a little and the paper's edge in the gap. Card.tsx places each
+   from ART_BOX so they line up to the pixel; hover cross-fades between them. */
+.folder__art{position:absolute;max-width:none;pointer-events:none;display:block;}
+.folder__art--hover{opacity:0;transition:opacity .22s var(--ease-soft);}
+.folder:is(:hover,:focus-visible,.is-hover) .folder__art--hover{opacity:1;}
 
-/* the Figma "Default" frame measures this block on the Motion card at
-   84.05 / 36.97, 296 wide, with 50 between the title and the summary —
-   both cards use it */
-.folder__text{
-  position:absolute;
-  left:5.559%;              /* 84.05 / 1512  */
-  top:4.204%;               /* 36.97 / 879.5 */
-  width:19.577%;            /* 296   / 1512  */
-  color:#fff;
-}
-/* heights are the Figma text boxes (33 and 76), so the 50 and 18 gaps below
-   them put the summary at 119.97 and the read time at 213.97 on the card */
+/* The title sits on the tab where the exports put it (86 / 35). The read time
+   and then the summary line up with the title's left edge and sit closer under
+   it than the frame's 87 / 160.92: the read time at 126 down (still clear of the
+   stitching below the tab), the summary 12 under it at 163. Percentages are of
+   the 1512 × 1007.5 card. */
 .folder__title{
+  position:absolute;
+  left:10.05%;top:2.60%;width:21.5%;
   margin:0;font-weight:500;
   font-size:calc(39.751px * var(--s));
   line-height:calc(32.013px * var(--s));
-  height:calc(33px * var(--s));
   letter-spacing:-.03em;
-  white-space:nowrap;       /* longer titles run past the 296 text column, never onto the summary */
+  white-space:nowrap;       /* longer titles run on rather than onto the summary */
+  color:#fff;
 }
 .folder__dek{
-  margin:calc(50px * var(--s)) 0 0;
-  height:calc(76px * var(--s));
-  font-weight:500;
+  position:absolute;
+  left:10.05%;top:16.18%;width:20.5%;
+  margin:0;font-weight:500;
   font-size:calc(18px * var(--s));
   line-height:calc(25.209px * var(--s));
   letter-spacing:.02em;
+  color:#fff;
 }
 .folder__read{
-  margin:calc(18px * var(--s)) 0 0;
-  font-weight:400;
+  position:absolute;
+  left:10.05%;top:12.5%;width:20.5%;
+  margin:0;font-weight:400;
   font-size:calc(14px * var(--s));
   line-height:calc(25.209px * var(--s));
   letter-spacing:.02em;
+  color:#fff;
 }
 
 .folder__stickers{position:absolute;inset:0;pointer-events:none;}
 .folder__stickers img{position:absolute;height:auto;max-width:none;}
 
-/* the opened folder in the reader is still drawn from the vector, so its
-   gradients are sampled from the card illustrations to match them */
-[data-theme='blue']  {--grad:url(#g-blue);  --edge:url(#g-blue-edge);}
-[data-theme='orange']{--grad:url(#g-orange);--edge:url(#g-orange-edge);}
-[data-theme='green'] {--grad:url(#g-green); --edge:url(#g-green-edge);}
+/* On a pick, the folders that weren't chosen run down and off the bottom
+   edge, from wherever hover had them (HomeView pins --lift first). 440ms, on a
+   gentle ease-in-out so they set off and travel smoothly rather than snapping
+   away, fading across the second half of the move. The chosen one goes at
+   once: the turning folder starts in exactly its place. */
+.view--ghost .folder{will-change:transform,opacity;}   /* on their own layers before they move */
+.stack.is-exiting .folder{pointer-events:none;}
+.stack.is-exiting .folder:not(.is-chosen){
+  transition:transform .44s cubic-bezier(.45,0,.25,1),opacity .26s cubic-bezier(.4,0,.6,1) .18s;
+  /* 70vh is just past what the back folder needs to clear the bottom edge —
+     going further only made the middle of the move a blur */
+  transform:translateY(70vh);
+  opacity:0;
+}
+.stack.is-exiting .folder.is-chosen{transition:none;visibility:hidden;}
 
-/* selection feedback: the chosen folder keeps rising, the rest sink away */
-.stack.is-choosing .folder{transition:transform .62s var(--ease),opacity .4s var(--ease-soft);}
-.stack.is-choosing .folder:not(.is-chosen){--lift:170px;opacity:0;}
-.stack.is-choosing .folder.is-chosen{--lift:-150px;}
-
-/* ─────────────────────────────────────────────── reader */
+/* ─────────────────────────────────────────────── reader
+   Every number is the Figma frame "Frame 2 → when user selects one folder to
+   read", measured at 1512 × 951, so 1 design px = 1px at that width and
+   scales with --s everywhere else. */
 .view--reader{min-height:100svh;}
+.view--reader:focus{outline:none;}
 
+/* ── the black bar above the folder ─────────────────────────────── */
 .reader__bar{
   position:relative;z-index:3;background:var(--ink);
-  padding:47px 0 0;
+  height:calc(246.335px * var(--s));
 }
 .back{
-  display:flex;align-items:center;gap:10px;
-  margin:0 0 38px clamp(24px,6.6vw,99px);
-  font-size:20px;letter-spacing:-.03em;
+  position:absolute;
+  left:calc(99.243px * var(--s));
+  top:calc(47.198px * var(--s));
+  height:calc(44px * var(--s));
+  display:flex;align-items:center;gap:calc(10px * var(--s));
+  font-size:calc(20px * var(--s));letter-spacing:-.02em;
   transition:opacity .2s var(--ease-soft);
 }
 .back:hover{opacity:.6;}
-.back img{width:32px;height:32px;display:block;}
+.back img{width:calc(32px * var(--s));height:calc(32px * var(--s));display:block;}
 
-.reader__head{
-  display:flex;align-items:flex-start;gap:clamp(28px,7.5vw,114px);
-  padding:0 clamp(24px,6.6vw,99px) 44px;
-}
 .reader__title{
-  margin:0;flex:0 0 auto;
+  position:absolute;margin:0;
+  left:calc(99.243px * var(--s));
+  top:calc(132.266px * var(--s));
   font-family:var(--font-serif),Georgia,serif;font-style:italic;font-weight:700;
-  font-size:clamp(34px,3.4vw,48px);line-height:1.1;letter-spacing:-.01em;
+  font-size:calc(44px * var(--s));
+  line-height:calc(54px * var(--s));
+  letter-spacing:-.01em;
   white-space:nowrap;
 }
-.reader__meta{display:flex;align-items:flex-start;gap:clamp(20px,3vw,44px);padding-top:6px;}
 .reader__dek{
-  margin:0;max-width:396px;
-  font-weight:500;font-size:18px;line-height:1.6;letter-spacing:.02em;
-}
-.reader__rule{align-self:stretch;width:1px;background:rgba(255,255,255,.35);}
-.reader__read{margin:0;font-size:16px;line-height:1.6;opacity:.95;white-space:nowrap;}
-
-/* enter motion — title lifts, summary wipes in left → right */
-.view--reader.is-entering .reader__title{
-  animation:title-in .62s var(--ease) both;
-}
-.view--reader.is-entering .reader__dek {animation:wipe-in .58s var(--ease) .16s both;}
-.view--reader.is-entering .reader__rule{animation:wipe-in .4s  var(--ease) .3s  both;}
-.view--reader.is-entering .reader__read{animation:wipe-in .5s  var(--ease) .34s both;}
-.view--reader.is-entering .sheet       {animation:sheet-in .72s var(--ease) both;}
-.view--reader.is-entering .back        {animation:fade-in .5s var(--ease-soft) .25s both;}
-
-@keyframes title-in{
-  from{opacity:0;transform:translateY(42px);clip-path:inset(0 0 100% 0);}
-  to  {opacity:1;transform:none;clip-path:inset(0 0 -20% 0);}
-}
-@keyframes wipe-in{
-  from{opacity:0;clip-path:inset(0 100% 0 0);}
-  to  {opacity:1;clip-path:inset(0 -4% 0 0);}
-}
-@keyframes sheet-in{
-  from{transform:translateY(96px);opacity:0;}
-  to  {transform:none;opacity:1;}
-}
-@keyframes fade-in{from{opacity:0;}to{opacity:1;}}
-
-/* the opened folder */
-.sheet{position:relative;z-index:4;}   /* above the reader header, so the paperclip can reach over the folder's top edge */
-.sheet__folder{
-  position:relative;
-  width:92.4%;
-  padding:0 0 60px;
-  container-type:inline-size;   /* 1 folder unit = 100cqw / 879 (components/OpenFolder.tsx) */
-  --fu:calc(100cqw / 879);
-  filter:drop-shadow(18px 10px 24px rgba(0,0,0,.45));
-}
-.folder-open{position:absolute;inset:0;}
-.folder-open svg{display:block;overflow:visible;}
-.folder-open__fill  {fill:var(--grad);}
-.folder-open__grain {fill:var(--grad);}
-.folder-open__edge  {fill:none;stroke:var(--edge);stroke-width:2;}
-.folder-open__stitch       {stroke:rgba(255,255,255,.93);}
-.folder-open__stitch-shadow{stroke:rgba(0,0,0,.8);}
-
-.sheet__tab{
-  /* centred across the tab, between the body edge (62.2 units in) and the
-     stitch (13.5 in), and down the tab's straight edge (76 → 393 units) */
   position:absolute;margin:0;
-  left:calc(100% - 37.85 * var(--fu));top:calc(234.5 * var(--fu));
+  left:calc(464.330px * var(--s));
+  top:calc(137.266px * var(--s));
+  width:calc(396px * var(--s));
+  font-weight:400;
+  font-size:calc(18px * var(--s));
+  line-height:calc(29.5px * var(--s));
+}
+.reader__rule{
+  position:absolute;
+  left:calc(902.618px * var(--s));
+  top:calc(137.266px * var(--s));
+  width:1px;height:calc(59px * var(--s));
+  background:rgba(255,255,255,.35);
+}
+.reader__read{
+  position:absolute;margin:0;
+  left:calc(944.894px * var(--s));
+  top:calc(137.266px * var(--s));
+  font-weight:400;
+  font-size:calc(16px * var(--s));
+  line-height:calc(26px * var(--s));
+  white-space:nowrap;
+}
+
+/* ── the opened folder ──────────────────────────────────────────── */
+/* above the reader header (z 3), so the paperclip can reach over the folder's top edge */
+.sheet{position:relative;z-index:4;}
+
+/* everything that turns on selection: folder, stickers and the paper in it.
+   The paper sits 76.3 below the folder's top (padding, not a margin on the
+   paper — a margin would collapse out of the stage and carry the folder down) */
+.sheet__stage{
+  position:relative;
+  width:calc(1397.396px * var(--s));
+  padding-top:calc(76.3px * var(--s));
+  padding-bottom:calc(120px * var(--s));
+  will-change:transform;
+}
+/* The folder is the closed card turned a quarter round and nothing else: the
+   1443.43 × 961.78 panel rotated, scaled to 1397.396 wide (× 1.45292), which
+   makes it 2097.2 tall. Forcing it any other shape warps it, and the paper with it. */
+.folder-open{
+  position:absolute;left:0;top:0;
+  width:calc(1397.396px * var(--s));
+  height:calc(2097.2px * var(--s));
+}
+/* the illustration is landscape, the open folder portrait: lay the art out in a
+   box the size of the target turned on its side, then turn it back. rotate(90deg)
+   about the top-left, then push it down by its own height, puts the card's tab
+   on the right edge, which is where the frame has it. */
+.folder-open__flat{
+  position:absolute;left:0;top:0;
+  width:calc(2097.2px * var(--s));      /* the target height */
+  height:calc(1397.396px * var(--s));   /* the target width  */
+  transform-origin:0 0;
+  transform:rotate(90deg) translate(0,-100%);
+}
+/* The flap and the sheet under it live in the panel's own space inside __flat,
+   so they turn with everything else. The flap sits at −19.82 / 125.95 and is
+   1483.08 × 835.836; the sheet is the body area, 20 / 79.02 to 1427.4 / 961.78. */
+.folder-open__sheet{
+  position:absolute;
+  left:1.3856%;top:8.2159%;
+  width:97.5041%;height:91.7841%;
+  background:#F1EFEE;
+  border-radius:calc(6px * var(--s));
+  box-shadow:0 calc(3px * var(--s)) calc(10px * var(--s)) rgba(0,0,0,.3);
+  display:none;
+}
+.folder-open__flap{
+  position:absolute;
+  left:-1.3732%;top:13.0956%;
+  width:102.7468%;height:86.9043%;
+  max-width:none;display:none;
+  transform-origin:50% 100%;      /* the fold is along the bottom, as on a real folder */
+  backface-visibility:hidden;
+}
+/* beat one (FLAP_MS, off): the cover lifts and the paper under it comes into
+   view, still in the card's own orientation; only then does beat two turn it */
+.view--reader.is-opening .folder-open__sheet{display:block;}
+.view--reader.is-opening .folder-open__flap{
+  display:block;
+  animation:flap-open var(--flap-ms,400ms) cubic-bezier(.4,0,.3,1) both;
+}
+.view--reader.is-opening :is(.paper,.stickers,.sheet__tab,.paper__clip){visibility:hidden;}
+/* hinged along the bottom fold; only to 54° and fading as it clears — taken all
+   the way over at this size it reads as a wall rising, not a folder opening */
+@keyframes flap-open{
+  from{transform:perspective(2200px) rotateX(0deg);opacity:1;}
+  40% {opacity:1;}
+  to  {transform:perspective(2200px) rotateX(-54deg);opacity:0;}
+}
+
+/* The art stops at 2097, so a longer article carries the folder on with more of
+   the art itself (components/OpenFolderArt.tsx): the art is cut just above its
+   bottom edge, a slice of its plain lower body repeats (every other copy
+   mirrored, so the colour, grain and stitching run on without a seam), and the
+   art's real bottom edge closes it off at the end. */
+.folder-open.is-cut{clip-path:inset(-80px -80px calc(150px * var(--s)) -80px);}
+.folder-ext{
+  position:absolute;left:0;
+  width:calc(1397.396px * var(--s));
+  overflow:hidden;pointer-events:none;
+}
+.folder-ext__art{
+  position:absolute;left:0;
+  width:calc(1397.396px * var(--s));
+  height:calc(2097.2px * var(--s));
+}
+/* while it turns, the folder is just the one picture — the turn is measured off it */
+.view--reader.is-spinning .folder-open.is-cut{clip-path:none;}
+.view--reader.is-spinning .folder-ext{display:none;}
+
+/* The tab label, centred across the tab — between the body's edge (1282.6) and
+   the stitching (≈1377) — and along the tab's straight edge (200 → 601). */
+.sheet__tab{
+  position:absolute;margin:0;
+  left:calc(1329.6px * var(--s));
+  top:calc(400.6px * var(--s));
   transform:translate(-50%,-50%);
-  line-height:1;white-space:nowrap;
   writing-mode:vertical-rl;
-  font-weight:500;font-size:calc(19 * var(--fu));letter-spacing:.01em;   /* ~30px at 1512 wide */
-  color:rgba(255,255,255,.95);
+  white-space:nowrap;
+  font-weight:500;
+  font-size:calc(30.2px * var(--s));
+  line-height:1;
+  letter-spacing:.01em;
+  color:#fff;
   pointer-events:none;
 }
 
-/* draggable stickers */
-.stickers{position:absolute;left:0;top:0;width:30%;height:100%;}
+/* Hooked over the folder's top edge and lying flat down onto the paper, 31.8 in
+   from its right edge as in the frame. ui/clip.png is one wire: the hook's apex
+   is at 9.6% of its height, so the folder edge lines up with 10.6% and about
+   1.5px of wire shows above it. The hook's tip, left of the apex and below the
+   edge, curls behind the folder, so it's cut away. */
+.paper__clip{
+  position:absolute;z-index:4;
+  left:calc(1101.79px * var(--s));        /* paper left + width − 31.8 − 85 */
+  top:calc(-16.16px * var(--s));
+  width:calc(85px * var(--s));
+  clip-path:polygon(evenodd,
+    0 0, 100% 0, 100% 100%, 0 100%, 0 0,
+    0 10.6%, 74.9% 10.6%, 74.9% 15.6%, 0 15.6%, 0 10.6%);
+  /* lying on the surface: a tight contact shadow plus a little soft spread */
+  filter:drop-shadow(.6px 1.4px .7px rgba(0,0,0,.5)) drop-shadow(1.5px 3.5px 3px rgba(0,0,0,.2));
+  pointer-events:none;
+}
+
+/* ── draggable stickers ─────────────────────────────────────────── */
+/* the layer covers the whole open folder, above the paper, so stickers can be
+   dragged onto the article; only the stickers themselves take the pointer */
+.stickers{position:absolute;inset:0;z-index:5;pointer-events:none;}
 .sticker{
-  position:absolute;display:block;
+  position:absolute;display:block;pointer-events:auto;
   filter:drop-shadow(0 10px 16px rgba(0,0,0,.34));
   cursor:grab;touch-action:none;user-select:none;-webkit-user-drag:none;
   transition:filter .2s var(--ease-soft),scale .2s var(--ease);
@@ -293,79 +391,238 @@ a{color:inherit;text-decoration:none;}
   transition:none;
 }
 
-/* the paper the blog is written on */
+/* ── the paper the blog is written on ───────────────────────────── */
+/* Inside the folder's pocket: 76.3 below the folder's top (stage padding) and
+   64 clear of the tab. 20% wider than the frame's 843.045 — 1011.65 — so a
+   long article doesn't run too long; the body's edge is 1282.59, so
+   1282.59 − 64 − 1011.65 puts its left edge at 206.94. */
 .paper{
-  /* sits inside the folder: 48 units below its top and 40 units clear of the tab */
-  position:relative;
-  margin:calc(48 * var(--fu)) 0 0 33%;
-  width:calc(100% - 33% - (62.2 + 40) * var(--fu));
-  min-height:600px;
-  background:var(--paper);
+  --tooth-w:calc(11px * var(--s));
+  --tooth-h:calc(6px * var(--s));
+  position:relative;z-index:3;
+  margin:0 0 0 calc(206.94px * var(--s));
+  width:calc(1011.65px * var(--s));
+  min-height:calc(1000px * var(--s));
+  padding-bottom:calc(123px * var(--s));
+  background:#F1EFEE;
   color:var(--paper-ink);
-  box-shadow:0 2px 0 rgba(0,0,0,.12),0 26px 40px rgba(0,0,0,.28);
-  padding:48px 64px 72px 110px;
+  /* the top and bottom edges are torn off a perforated sheet */
+  -webkit-mask-image:var(--tooth-up),var(--tooth-dn),linear-gradient(#000,#000);
+          mask-image:var(--tooth-up),var(--tooth-dn),linear-gradient(#000,#000);
+  -webkit-mask-repeat:repeat-x,repeat-x,no-repeat;
+          mask-repeat:repeat-x,repeat-x,no-repeat;
+  -webkit-mask-position:left top,left bottom,left var(--tooth-h);
+          mask-position:left top,left bottom,left var(--tooth-h);
+  -webkit-mask-size:var(--tooth-w) var(--tooth-h),var(--tooth-w) var(--tooth-h),100% calc(100% - var(--tooth-h) * 2);
+          mask-size:var(--tooth-w) var(--tooth-h),var(--tooth-w) var(--tooth-h),100% calc(100% - var(--tooth-h) * 2);
+}
+:root{
+  --tooth-up:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='6'%3E%3Cpath d='M0 6 5.5 0 11 6Z' fill='%23fff'/%3E%3C/svg%3E");
+  --tooth-dn:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='6'%3E%3Cpath d='M0 0 5.5 6 11 0Z' fill='%23fff'/%3E%3C/svg%3E");
 }
 .paper::before{   /* paper grain */
-  content:'';position:absolute;inset:0;pointer-events:none;mix-blend-mode:multiply;opacity:.5;
+  content:'';position:absolute;inset:0;pointer-events:none;mix-blend-mode:multiply;opacity:.45;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.22'/%3E%3C/svg%3E");
 }
-.paper__clip{
-  /* Hooked over the folder's top edge, lying flat down the folder and onto the
-     paper (which sits 48 units below that edge), holding it in place.
-     ui/clip.png is one wire: the hook's apex is at 9.6% of its height, so the
-     folder edge lines up with 10.6% (16.16px down the 152.3px-tall clip) and
-     about 1.5px of wire shows above it. The hook's tip, left of the apex and
-     below the edge, curls behind the folder, so it's cut away. */
-  position:absolute;right:38px;top:calc(-48 * var(--fu) - 16.16px);width:85px;
-  clip-path:polygon(evenodd,
-    0 0, 100% 0, 100% 100%, 0 100%, 0 0,
-    0 10.6%, 74.9% 10.6%, 74.9% 15.6%, 0 15.6%, 0 10.6%);
-  /* lying on the surface: a tight contact shadow plus a little soft spread */
-  filter:drop-shadow(.6px 1.4px .7px rgba(0,0,0,.5)) drop-shadow(1.5px 3.5px 3px rgba(0,0,0,.2));
-  pointer-events:none;
-}
+
+/* punch holes, the first centred 68 down and one every 119, showing the folder */
 .paper__holes{
-  position:absolute;left:0;top:0;bottom:0;width:72px;
-  border-right:1px solid rgba(119,119,119,.3);
-  display:flex;flex-direction:column;justify-content:space-around;align-items:center;
-  padding:48px 0;
+  position:absolute;left:0;top:0;bottom:0;
+  width:calc(72px * var(--s));
+  display:flex;flex-direction:column;align-items:center;
+  padding-top:calc(58px * var(--s));
+  gap:calc(99px * var(--s));
 }
-.paper__holes i{width:20px;height:20px;border-radius:50%;background:var(--hole,#1640DD);display:block;}
+.paper__holes i{
+  flex:0 0 auto;display:block;
+  width:calc(20px * var(--s));height:calc(20px * var(--s));
+  border-radius:50%;
+  background:var(--hole,#1E48CE);
+}
 .sheet[data-theme='orange'] .paper__holes i{--hole:#C2431D;}
 .sheet[data-theme='green'] .paper__holes i{--hole:#04913F;}
 
-/* blog typography — Figtree, inked onto the page */
-.paper__body{position:relative;max-width:678px;}
-.paper__body > * + *{margin-top:24px;}
+/* the dashed margin rule the holes sit beside */
+.paper__margin{
+  position:absolute;
+  left:calc(70.357px * var(--s));
+  top:calc(4.8px * var(--s));bottom:calc(4.8px * var(--s));
+  width:1px;
+  background:repeating-linear-gradient(180deg,rgba(90,90,90,.55) 0 6px,transparent 6px 12px);
+}
+
+/* "· File #1 ·" rubber stamp, top right (the frame's spot, carried right with the wider page) */
+.paper__stamp{
+  position:absolute;margin:0;
+  left:calc(838.6px * var(--s));
+  top:calc(48px * var(--s));
+  padding:calc(5px * var(--s)) calc(12px * var(--s));
+  transform:rotate(-8deg);
+  border:1.5px solid #5B7CF5;border-radius:calc(7px * var(--s));
+  font-family:'American Typewriter','Courier New',ui-monospace,monospace;
+  font-weight:700;
+  font-size:calc(20px * var(--s));
+  line-height:calc(26px * var(--s));
+  letter-spacing:.04em;
+  color:#5B7CF5;
+  white-space:nowrap;
+  opacity:.92;
+}
+
+/* "Also find this on Medium" */
+.paper__also{
+  position:absolute;margin:0;
+  left:calc(116.877px * var(--s));
+  top:calc(51.947px * var(--s));
+  display:flex;align-items:center;gap:calc(12px * var(--s));
+  font-family:'American Typewriter','Courier New',ui-monospace,monospace;
+  font-size:calc(16px * var(--s));
+  line-height:calc(24px * var(--s));
+}
+.medium{display:inline-flex;align-items:center;gap:calc(8px * var(--s));color:inherit;text-decoration:none;}
+.medium span{
+  font-family:var(--font-figtree),system-ui,sans-serif;font-weight:700;
+  font-size:calc(16px * var(--s));
+  border-bottom:1px dotted rgba(13,13,13,.75);
+}
+.medium:hover span{border-bottom-style:solid;}
+.medium__mark{width:calc(24px * var(--s));height:calc(24px * var(--s));display:block;}
+
+/* ── the article itself — POP type-scale ────────────────────────── */
+.paper__content{
+  position:relative;
+  margin-left:calc(116.877px * var(--s));
+  padding-top:calc(144.814px * var(--s));
+  width:calc(814.92px * var(--s));        /* the frame's 679.102, 20% wider with the page */
+}
+.paper__head{                                   /* Article heading 44/52 bold −2% */
+  margin:0;font-weight:700;
+  font-size:calc(44px * var(--s));
+  line-height:calc(52px * var(--s));
+  letter-spacing:-.02em;
+}
+.paper__date{                                   /* Body small 16/24 */
+  margin:calc(18px * var(--s)) 0 0;
+  font-weight:400;
+  font-size:calc(16px * var(--s));
+  line-height:calc(20px * var(--s));
+}
+.share{
+  margin-top:calc(30px * var(--s));
+  display:inline-flex;align-items:center;gap:calc(8px * var(--s));
+  height:calc(36px * var(--s));
+  font-size:calc(16px * var(--s));
+  line-height:calc(24px * var(--s));
+  color:var(--paper-ink);
+  transition:opacity .2s var(--ease-soft);
+}
+.share:hover{opacity:.6;}
+.share svg{width:calc(16px * var(--s));height:calc(16px * var(--s));display:block;}
+.paper__hr{
+  display:block;margin-top:calc(5px * var(--s));
+  width:calc(813.32px * var(--s));height:1px;
+  background:rgba(13,13,13,.55);
+}
+
+.paper__body{margin-top:calc(30px * var(--s));}
+
+/* type comes straight off the POP type-scale (node 2234:85202):
+     paragraph heading 32/40 semibold −1.5%   subheading 24/32 semibold −1%
+     body 18/30 regular                       body small 16/24 regular
+     highlighted paragraph American Typewriter 16/24                      */
 .paper__body h2{
-  margin:0;font-weight:700;font-size:36px;line-height:40px;letter-spacing:-.02em;
-  padding-top:16px;
+  font-weight:600;
+  font-size:calc(32px * var(--s));
+  line-height:calc(40px * var(--s));
+  letter-spacing:-.015em;
 }
-.paper__body h2 + *{margin-top:32px;}
-.paper__body h3{margin:0;font-weight:600;font-size:24px;line-height:30px;letter-spacing:-.02em;padding-top:8px;}
+.paper__body h3{
+  font-weight:600;
+  font-size:calc(24px * var(--s));
+  line-height:calc(32px * var(--s));
+  letter-spacing:-.01em;
+}
 .paper__body p{
-  margin:0;font-weight:400;font-size:16px;line-height:24px;
-  color:#14110F;
-  text-shadow:0 .4px .6px rgba(20,17,15,.28);   /* a touch of pen bleed */
+  font-weight:400;
+  font-size:calc(18px * var(--s));
+  line-height:calc(30px * var(--s));
 }
-.paper__body ol,.paper__body ul{margin:0;padding-left:26px;font-size:16px;line-height:24px;}
-.paper__body li + li{margin-top:4px;}
+.paper__body ol,.paper__body ul{
+  padding-left:calc(30px * var(--s));
+  font-weight:400;
+  font-size:calc(18px * var(--s));
+  line-height:calc(30px * var(--s));
+}
 .paper__body blockquote{
-  margin:0;padding:4px 0 4px 20px;border-left:3px solid rgba(20,17,15,.3);
-  font-weight:600;font-size:19px;line-height:28px;
+  padding:calc(4px * var(--s)) 0 calc(4px * var(--s)) calc(20px * var(--s));
+  border-left:3px solid rgba(13,13,13,.3);
+  font-family:'American Typewriter','Courier New',ui-monospace,monospace;
+  font-size:calc(16px * var(--s));
+  line-height:calc(24px * var(--s));
 }
-.paper__body figure{margin:36px 0;}
 .paper__body figure img,.paper__body figure video{
-  display:block;width:100%;height:auto;border-radius:4px;
+  display:block;width:100%;height:auto;
   box-shadow:0 10px 24px rgba(0,0,0,.22);
 }
 .paper__body figcaption{
-  margin-top:10px;font-size:13px;letter-spacing:.02em;color:rgba(20,17,15,.65);
+  font-size:calc(16px * var(--s));
+  line-height:calc(24px * var(--s));
+  color:rgba(13,13,13,.65);
 }
 
-/* ─────────────────────────────────────────────── the TV (components/Tv.tsx) */
-.paper__body .tv-figure{margin:44px 0;}
-.paper__body .tv{display:block;width:100%;max-width:620px;height:auto;margin:0 auto;overflow:visible;}
+/* spacing comes after the type so it isn't out-specified by it: one blank
+   line between blocks, and the frame's 31 under a section heading */
+.paper__body > *{margin:0;}
+.paper__body > * + *{margin-top:calc(30px * var(--s));}
+.paper__body > h2 + *{margin-top:calc(31px * var(--s));}
+.paper__body > p + :is(ol,ul){margin-top:calc(8px * var(--s));}
+.paper__body > figure{margin:calc(40px * var(--s)) 0;}
+.paper__body > figure + *{margin-top:calc(40px * var(--s));}
+.paper__body li + li{margin-top:0;}
+.paper__body figcaption{margin-top:calc(10px * var(--s));}
+
+/* the TV (components/Tv.tsx) */
+.paper__body .tv{display:block;width:100%;max-width:calc(620px * var(--s));height:auto;margin:0 auto;overflow:visible;box-shadow:none;}
+
+/* ✦ The End ✦ */
+.paper__end{
+  margin:calc(160px * var(--s)) 0 0;
+  display:flex;align-items:center;justify-content:center;
+  gap:calc(11px * var(--s));
+  font-weight:600;
+  font-size:calc(24px * var(--s));
+  line-height:calc(40px * var(--s));
+}
+.spark{width:calc(20.655px * var(--s));height:calc(20.655px * var(--s));display:block;}
+
+/* ── selection → rotation ───────────────────────────────────────── */
+html[data-spinning],html[data-spinning] body{overflow:hidden;}
+/* a 2,500px page mustn't sweep across the screen mid-turn */
+.view--reader.is-spinning .paper{
+  max-height:calc(2097.2px * var(--s) - 76.3px * var(--s));
+  overflow:hidden;
+}
+.view--reader.is-spinning .next{visibility:hidden;}
+/* while it turns, the folder passes over the black bar instead of being sliced
+   by it — which also keeps the header text hidden until the folder is clear */
+.view--reader.is-spinning .reader__bar{z-index:1;}
+.view--reader.is-spinning .sheet{z-index:5;}
+
+/* ── the header text arriving (components/GlyphText.tsx) ────────────
+   Each letter turns up broken — clipped to a narrow band of itself — and the
+   band opens out until the letter is whole, left to right across the line;
+   it has all landed by the time the folder reaches 90°. */
+.word{white-space:nowrap;}
+.glyph{display:inline-block;white-space:pre;}
+.view--reader.is-revealing .glyph{
+  animation:glyph-in var(--dur,260ms) linear var(--d,0ms) both;
+}
+@keyframes glyph-in{
+  0%  {clip-path:var(--band);opacity:0;}
+  14% {clip-path:var(--band);opacity:1;}
+  56% {clip-path:var(--mid);opacity:1;}
+  100%{clip-path:inset(-25% -6% -25% -6%);opacity:1;}
+}
 
 /* ─────────────────────────────────────────────── end / next blog */
 .next{position:relative;padding:0 0 120px;background:var(--ink);}
@@ -391,24 +648,35 @@ a{color:inherit;text-decoration:none;}
 
 .next__folder{
   position:relative;display:block;flex:0 0 auto;
-  width:min(711px,47vw);aspect-ratio:711/414;
+  width:min(711px,47vw);aspect-ratio:1443.43/961.78;
   transition:transform .4s var(--ease);
 }
 .next__folder:hover,.next__folder:focus-visible{transform:translateY(-14px);outline:none;}
 
 /* ─────────────────────────────────────────────── responsive */
+/* Under 900px the frame's geometry stops working, so the reader falls back to
+   a single readable column. Not a designed breakpoint. */
 @media (max-width:900px){
-  .reader__head{flex-direction:column;gap:20px;}
-  .reader__meta{flex-direction:column;gap:12px;}
+  .reader__bar{height:auto;padding:24px 20px 28px;}
+  .back,.reader__title,.reader__dek,.reader__rule,.reader__read{position:static;}
   .reader__rule{display:none;}
-  .sheet__folder{width:100%;}
-  .stickers{display:none;}
-  .paper{margin:0 auto;width:92%;padding:40px 28px 56px 76px;}
-  .paper__clip{top:-16.16px;}   /* the paper sits flush with the folder top here */
-  .paper__holes{width:52px;}
+  .reader__title{font-size:34px;line-height:40px;margin:18px 0 10px;white-space:normal;}
+  .reader__dek{width:auto;font-size:16px;line-height:26px;}
+  .reader__read{font-size:14px;margin-top:8px;}
+  .sheet__stage{width:100%;padding-top:0;}
+  .folder-open,.folder-ext,.sheet__tab,.paper__clip,.stickers{display:none;}
+  .paper{margin:0 auto;width:100%;}
+  .paper__content{margin-left:0;padding:28px 20px 0;width:auto;}
+  .paper__head{font-size:30px;line-height:36px;}
+  .paper__hr{width:100%;}
+  .paper__also,.paper__stamp{position:static;transform:none;margin:0 20px;}
+  .paper__stamp{width:fit-content;margin-top:20px;}
+  .paper__holes,.paper__margin{display:none;}
+  .paper__body p,.paper__body ol,.paper__body ul{font-size:16px;line-height:26px;}
+  .paper__body h2{font-size:24px;line-height:32px;}
   .next__inner{flex-direction:column;}
   .next__folder{width:100%;}
-  .folder__text{width:60%;min-width:0;}
+  .folder__title,.folder__dek,.folder__read{width:52%;}
 }
 
 @media (prefers-reduced-motion:reduce){
