@@ -67,7 +67,6 @@ export const HOME_STICKERS: Record<string, StickerSpot[]> = {
     { src: STICKER.motion, x: 721, y: 194, w: 171 },
     { src: STICKER.figma, x: 980, y: 151, w: 144 },
     { src: STICKER.bloom, x: 1143, y: 230, w: 215 },
-    { src: STICKER.clip, x: 980, y: 87, w: 81 },
   ],
   'figma-ui-to-code': [
     { src: STICKER.figma, x: 809, y: 214, w: 143 },
