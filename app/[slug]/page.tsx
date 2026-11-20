@@ -8,6 +8,7 @@ import Article from '@/components/Article';
 import Stickers from '@/components/Stickers';
 import PaperHoles from '@/components/PaperHoles';
 import ReaderShell from '@/components/ReaderShell';
+import OpenFolder from '@/components/OpenFolder';
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -48,18 +49,7 @@ export default async function ReaderPage({ params }: Props) {
 
       <div className="sheet" data-theme={blog.theme}>
         <div className="sheet__folder">
-          <svg className="folder-open" viewBox="0 0 879 1512" preserveAspectRatio="none" aria-hidden="true">
-            <g transform="translate(879,0) rotate(90)">
-              <use href="#folder-path" className="folder-open__fill" />
-              <use href="#folder-path" className="folder-open__grain" filter="url(#grain)" />
-              <use href="#folder-path" className="folder-open__edge" />
-              <use
-                href="#folder-path"
-                className="folder-open__stitch"
-                transform="translate(756,439.75) scale(0.986) translate(-756,-439.75)"
-              />
-            </g>
-          </svg>
+          <OpenFolder />
           <p className="sheet__tab">{blog.title}</p>
           <Stickers list={blog.stickers} />
           <article className="paper">

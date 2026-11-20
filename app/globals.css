@@ -253,18 +253,24 @@ a{color:inherit;text-decoration:none;}
   position:relative;
   width:92.4%;
   padding:0 0 60px;
+  container-type:inline-size;   /* 1 folder unit = 100cqw / 879 (components/OpenFolder.tsx) */
+  --fu:calc(100cqw / 879);
   filter:drop-shadow(18px 10px 24px rgba(0,0,0,.45));
 }
-.folder-open{
-  position:absolute;inset:0;width:100%;height:100%;display:block;
-}
+.folder-open{position:absolute;inset:0;}
+.folder-open svg{display:block;overflow:visible;}
 .folder-open__fill  {fill:var(--grad);}
 .folder-open__grain {fill:var(--grad);}
 .folder-open__edge  {fill:none;stroke:var(--edge);stroke-width:2;}
 .folder-open__stitch{fill:none;stroke:rgba(255,255,255,.45);stroke-width:1.6;stroke-dasharray:10 10;}
 
 .sheet__tab{
-  position:absolute;right:-6px;top:66px;margin:0;
+  /* centred across the tab, between the body edge (62.2 units in) and the
+     stitch (14 in), and down the tab's straight edge (76 → 393 units) */
+  position:absolute;margin:0;
+  left:calc(100% - 38.1 * var(--fu));top:calc(234.5 * var(--fu));
+  transform:translate(-50%,-50%);
+  line-height:1;white-space:nowrap;
   writing-mode:vertical-rl;
   font-weight:500;font-size:20px;letter-spacing:.01em;
   color:rgba(255,255,255,.95);
@@ -288,9 +294,10 @@ a{color:inherit;text-decoration:none;}
 
 /* the paper the blog is written on */
 .paper{
+  /* sits inside the folder: 48 units below its top and 40 units clear of the tab */
   position:relative;
-  margin:0 0 0 33%;
-  width:60%;
+  margin:calc(48 * var(--fu)) 0 0 33%;
+  width:calc(100% - 33% - (62.2 + 40) * var(--fu));
   min-height:600px;
   background:var(--paper);
   color:var(--paper-ink);
