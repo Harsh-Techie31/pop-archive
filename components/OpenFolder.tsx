@@ -13,7 +13,7 @@ import { useLayoutEffect, useRef, useState } from 'react';
    1 unit = folder width / 879 (the Figma folder's short side). */
 
 const UNITS_ACROSS = 879;
-const STITCH_INSET = 14; // units in from the edge
+const STITCH_INSET = 13.5; // units in from the edge (the home cards' stitch sits 13.3 in)
 const STITCH_RADIUS = 9; // units, rounding at the stitch's corners
 
 type P = [number, number];
@@ -116,9 +116,18 @@ function stitchPath(W: number, H: number) {
   return path + 'Z';
 }
 
+/* The thread, matched to the stitching baked into the home card art (measured
+   from the Figma export): a near-opaque white dash with a dark line tucked
+   up-and-right of it, 8.5 on / 7.5 off. Sized in page design px (--s), like
+   the home cards, so the thread is the same real size in both places. */
+const DASH = 8.5;
+const GAP = 7.5;
+const THREAD = 1.3;
+const SHADOW = 1.5; // the dark line sits 1.5 up and 1.5 right of the thread
+
 export default function OpenFolder() {
   const ref = useRef<HTMLDivElement>(null);
-  const [size, setSize] = useState<{ W: number; H: number } | null>(null);
+  const [size, setSize] = useState<{ W: number; H: number; s: number } | null>(null);
 
   useLayoutEffect(() => {
     const node = ref.current?.parentElement;
@@ -126,7 +135,10 @@ export default function OpenFolder() {
     const measure = () => {
       const W = node.clientWidth;
       const H = node.clientHeight;
-      setSize((s) => (s && Math.abs(s.W - W) < 0.5 && Math.abs(s.H - H) < 0.5 ? s : { W, H }));
+      const s = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--s')) || 1;
+      setSize((p) =>
+        p && Math.abs(p.W - W) < 0.5 && Math.abs(p.H - H) < 0.5 && Math.abs(p.s - s) < 1e-4 ? p : { W, H, s },
+      );
     };
     measure();
     const ro = new ResizeObserver(measure);
@@ -141,13 +153,28 @@ export default function OpenFolder() {
           <path d={outlinePath(size.W, size.H)} className="folder-open__fill" />
           <path d={outlinePath(size.W, size.H)} className="folder-open__grain" filter="url(#grain)" />
           <path d={outlinePath(size.W, size.H)} className="folder-open__edge" />
-          <path
-            d={stitchPath(size.W, size.H)}
-            className="folder-open__stitch"
-            style={{ strokeDasharray: `${(10 * size.W) / UNITS_ACROSS} ${(10 * size.W) / UNITS_ACROSS}` }}
-          />
+          <Stitch d={stitchPath(size.W, size.H)} s={size.s} />
         </svg>
       )}
     </div>
+  );
+}
+
+function Stitch({ d, s }: { d: string; s: number }) {
+  const dash = `${DASH * s} ${GAP * s}`;
+  // floors keep the two lines crisp and apart on smaller screens, where they'd
+  // otherwise land on half pixels and blur into each other
+  const off = Math.max(1.3, SHADOW * s);
+  const thread = Math.max(1.2, THREAD * s);
+  return (
+    <g fill="none" strokeDasharray={dash} strokeWidth={thread} strokeLinecap="butt">
+      <path
+        d={d}
+        className="folder-open__stitch-shadow"
+        strokeWidth={thread * 1.25}
+        transform={`translate(${off} ${-off})`}
+      />
+      <path d={d} className="folder-open__stitch" />
+    </g>
   );
 }

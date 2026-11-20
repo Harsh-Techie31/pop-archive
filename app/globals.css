@@ -248,7 +248,7 @@ a{color:inherit;text-decoration:none;}
 @keyframes fade-in{from{opacity:0;}to{opacity:1;}}
 
 /* the opened folder */
-.sheet{position:relative;}
+.sheet{position:relative;z-index:4;}   /* above the reader header, so the paperclip can reach over the folder's top edge */
 .sheet__folder{
   position:relative;
   width:92.4%;
@@ -262,17 +262,18 @@ a{color:inherit;text-decoration:none;}
 .folder-open__fill  {fill:var(--grad);}
 .folder-open__grain {fill:var(--grad);}
 .folder-open__edge  {fill:none;stroke:var(--edge);stroke-width:2;}
-.folder-open__stitch{fill:none;stroke:rgba(255,255,255,.45);stroke-width:1.6;stroke-dasharray:10 10;}
+.folder-open__stitch       {stroke:rgba(255,255,255,.93);}
+.folder-open__stitch-shadow{stroke:rgba(0,0,0,.8);}
 
 .sheet__tab{
   /* centred across the tab, between the body edge (62.2 units in) and the
-     stitch (14 in), and down the tab's straight edge (76 → 393 units) */
+     stitch (13.5 in), and down the tab's straight edge (76 → 393 units) */
   position:absolute;margin:0;
-  left:calc(100% - 38.1 * var(--fu));top:calc(234.5 * var(--fu));
+  left:calc(100% - 37.85 * var(--fu));top:calc(234.5 * var(--fu));
   transform:translate(-50%,-50%);
   line-height:1;white-space:nowrap;
   writing-mode:vertical-rl;
-  font-weight:500;font-size:20px;letter-spacing:.01em;
+  font-weight:500;font-size:calc(19 * var(--fu));letter-spacing:.01em;   /* ~30px at 1512 wide */
   color:rgba(255,255,255,.95);
   pointer-events:none;
 }
@@ -309,8 +310,18 @@ a{color:inherit;text-decoration:none;}
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.22'/%3E%3C/svg%3E");
 }
 .paper__clip{
-  position:absolute;right:38px;top:-46px;width:85px;
-  filter:drop-shadow(3px 3px 4px rgba(0,0,0,.4));
+  /* Hooked over the folder's top edge, lying flat down the folder and onto the
+     paper (which sits 48 units below that edge), holding it in place.
+     ui/clip.png is one wire: the hook's apex is at 9.6% of its height, so the
+     folder edge lines up with 10.6% (16.16px down the 152.3px-tall clip) and
+     about 1.5px of wire shows above it. The hook's tip, left of the apex and
+     below the edge, curls behind the folder, so it's cut away. */
+  position:absolute;right:38px;top:calc(-48 * var(--fu) - 16.16px);width:85px;
+  clip-path:polygon(evenodd,
+    0 0, 100% 0, 100% 100%, 0 100%, 0 0,
+    0 10.6%, 74.9% 10.6%, 74.9% 15.6%, 0 15.6%, 0 10.6%);
+  /* lying on the surface: a tight contact shadow plus a little soft spread */
+  filter:drop-shadow(.6px 1.4px .7px rgba(0,0,0,.5)) drop-shadow(1.5px 3.5px 3px rgba(0,0,0,.2));
   pointer-events:none;
 }
 .paper__holes{
@@ -393,6 +404,7 @@ a{color:inherit;text-decoration:none;}
   .sheet__folder{width:100%;}
   .stickers{display:none;}
   .paper{margin:0 auto;width:92%;padding:40px 28px 56px 76px;}
+  .paper__clip{top:-16.16px;}   /* the paper sits flush with the folder top here */
   .paper__holes{width:52px;}
   .next__inner{flex-direction:column;}
   .next__folder{width:100%;}
