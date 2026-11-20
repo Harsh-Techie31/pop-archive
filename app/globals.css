@@ -339,19 +339,25 @@ a{color:inherit;text-decoration:none;}
 .view--reader.is-spinning .folder-open.is-cut{clip-path:none;}
 .view--reader.is-spinning .folder-ext{display:none;}
 
-/* The tab label, centred across the tab — between the body's edge (1282.6) and
-   the stitching (≈1377) — and along the tab's straight edge (200 → 601). */
+/* The tab label is the card's title, carried into the open folder: same size
+   (39.751), weight and tracking as .folder__title, and on the same spot — the
+   card's title starts 145.06 along the tab and sits 17.36 → 63.18 across it
+   (panel units), which × 1.45292 is 210.8 from the folder's top and centred
+   on 1338.9 here. Anchored at its start, so every title lines up however long.
+   During the turn ReaderShell scales it against the folder's own growth, so it
+   stays the size it was on the card the whole way round. */
 .sheet__tab{
   position:absolute;margin:0;
-  left:calc(1329.6px * var(--s));
-  top:calc(400.6px * var(--s));
-  transform:translate(-50%,-50%);
+  left:calc(1338.9px * var(--s));
+  top:calc(210.8px * var(--s));
+  transform:translateX(-50%);
+  transform-origin:50% 0;
   writing-mode:vertical-rl;
   white-space:nowrap;
   font-weight:500;
-  font-size:calc(30.2px * var(--s));
+  font-size:calc(39.751px * var(--s));
   line-height:1;
-  letter-spacing:.01em;
+  letter-spacing:-.03em;
   color:#fff;
   pointer-events:none;
 }
@@ -612,16 +618,26 @@ html[data-spinning],html[data-spinning] body{overflow:hidden;}
    Each letter turns up broken — clipped to a narrow band of itself — and the
    band opens out until the letter is whole, left to right across the line;
    it has all landed by the time the folder reaches 90°. */
-.word{white-space:nowrap;}
-.glyph{display:inline-block;white-space:pre;}
+/* The real text sets the layout, invisibly (kerning, wrapping and all); each
+   letter is a boxed copy placed on its measured spot, so it can be clipped on
+   its own in every browser and still sits exactly where the settled text lands. */
+.glyph-base{visibility:hidden;}
+.glyph{
+  position:absolute;display:inline-block;
+  line-height:normal;          /* the box starts at the measured top of the letter */
+  white-space:pre;
+}
 .view--reader.is-revealing .glyph{
   animation:glyph-in var(--dur,260ms) linear var(--d,0ms) both;
 }
+/* The finished state leaves generous room round each letter: Awesome Serif is a
+   slanted, swashy italic whose strokes reach well past their own box, and a
+   tight clip shaved them thin until the plain text came back. */
 @keyframes glyph-in{
   0%  {clip-path:var(--band);opacity:0;}
   14% {clip-path:var(--band);opacity:1;}
   56% {clip-path:var(--mid);opacity:1;}
-  100%{clip-path:inset(-25% -6% -25% -6%);opacity:1;}
+  100%{clip-path:inset(-60% -70% -60% -70%);opacity:1;}
 }
 
 /* ─────────────────────────────────────────────── end / next blog */

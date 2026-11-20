@@ -96,9 +96,24 @@ function spin(section: HTMLElement, from: Rect, done: () => void) {
     section.classList.add('is-opening');
   }
 
+  const timing = { duration: SPIN_MS, delay: FLAP_MS, easing: 'cubic-bezier(.33,0,.15,1)', fill: 'both' } as const;
   const anim = stage.animate(
     [{ transform: `translate(${tx}px, ${ty}px) rotate(-90deg) scale(${scale})` }, { transform: 'none' }],
-    { duration: SPIN_MS, delay: FLAP_MS, easing: 'cubic-bezier(.33,0,.15,1)', fill: 'both' },
+    timing,
+  );
+
+  /* The tab label is the card's title carried in. The stage grows from `scale`
+     to 1, so the label is scaled by the inverse on the same easing — its
+     keyframes sit in eased progress, where the stage's scale is linear — and
+     stays the size it was on the card the whole way round. */
+  const label = section.querySelector<HTMLElement>('.sheet__tab');
+  const steps = 16;
+  const hold = label?.animate(
+    Array.from({ length: steps + 1 }, (_, i) => {
+      const p = i / steps;
+      return { offset: p, transform: `translateX(-50%) scale(${1 / (scale + (1 - scale) * p)})` };
+    }),
+    timing,
   );
 
   const tidy = () => {
@@ -109,12 +124,14 @@ function spin(section: HTMLElement, from: Rect, done: () => void) {
   const t = setTimeout(() => {
     anim.finish(); // lands on 'none' even if the page was throttled in the background
     anim.cancel();
+    hold?.cancel();
     tidy();
     done();
   }, FLAP_MS + SPIN_MS);
   return () => {
     clearTimeout(t);
     anim.cancel();
+    hold?.cancel();
     tidy();
   };
 }

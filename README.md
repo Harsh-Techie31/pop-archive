@@ -139,7 +139,9 @@ and the article page (2186:83608), at 1512 × 951 — the numbers are in `app/gl
   lower body repeats with every other copy mirrored (so colour, grain and stitching run on
   without a seam), and the art's real bottom edge closes the folder off below the article.
   During the opening turn it's just the one picture, since the turn is measured off its box.
-- **The tab label** is centred across the tab and along its straight edge.
+- **The tab label** is the card's title carried in: the same size (39.75), weight and tracking,
+  starting on the same spot along the tab. During the turn it's scaled against the folder's own
+  growth, so it stays exactly the size it was on the card from the click to the open folder.
 - **The paper** sits 76 below the folder's top and 64 clear of the tab. It's 1011.65 wide, 20%
   wider than the frame's 843 (and its text column 815 against 679) so long articles don't run
   too long; the stickers start in the 207-wide strip to its left. Perforated top and bottom edges, punch holes (first at 68, then every 119), a dashed
